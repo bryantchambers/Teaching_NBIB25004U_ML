@@ -33,7 +33,19 @@ This assignment in particular is to learn and complete a Machine Learning Exerci
 ## Progress
 - **Infrastructure:** Created `config.R`, `logs/`, `results/`, and `figures/` directories.
 - **Script 01:** Completed `01_data_preparation.R`. This script cleans column names using `janitor` and performs standard ML preprocessing (scaling, variance filtering, correlation collapsing) using `mikropml::preprocess_data()`. Output is saved as `results/cleaned_data.rds`.
-- **Script 02:** Completed `02_model_training.R`. This script implements the training strategy using `mikropml::run_ml()` for both Logistic Regression (`glmnet`) and Random Forest (`rf`). It includes 5-fold cross-validation, an 80/20 train/test split, and parallel processing via `future`. Output is saved as `results/model_results.rds`.
+- **Script 02:** Completed `02_model_training.R`. Implements `glmnet` and `rf` training with 5-fold CV and parallel processing via `future`. Output is saved as `results/model_results.rds`.
+- **Script 03:** Completed `03_model_evaluation.R`. Aggregates metrics and generates ROC/PRC plots.
+- **Script 04:** Completed `04_hyperparameter_tuning.R`. Demonstrates improvement via custom grid search.
+- **Script 05:** Completed `05_feature_importance.R`. Manual permutation importance implementation for transparency and robustness.
+- **Guide:** Completed `Practical_Guide.md` for student use.
+
+## Critical Lessons Learned & Insights
+1. **Column Sanitization:** `janitor::clean_names()` is mandatory. Microbiome OTU tables often have headers that R's formula interface or `caret` find illegal (e.g., spaces or starting with numbers), leading to silent failures or cryptic errors.
+2. **Parallelization Efficiency:** Using `future::plan(future::multicore)` is the single most effective way to optimize `run_ml()`. Students should be taught that while a single RF run might take seconds on 200 samples, 100x repeated CV scales linearly and requires multiple cores for a 1-hour practical.
+3. **Data Type Consistency:** `mikropml` and `caret` can produce type mismatches in result tables (e.g., `Neg_Pred_Value` becoming character due to "NA" strings). Pre-emptive casting to `as.numeric()` is necessary when merging performance dataframes.
+4. **Factor Level Management:** For binary classification, outcome columns MUST be factors with explicit levels. If levels are inconsistent between training and test sets (or become character type), metric functions like `twoClassSummary()` will fail with "subscript out of bounds" or "incorrect number of levels" errors.
+5. **Caret Renaming:** Developers must account for `caret` internally renaming the outcome column to `.outcome`. This must be reverted before passing training data to secondary `mikropml` functions like `get_feature_importance()`.
+6. **Pedagogical "Blessing":** While `get_feature_importance()` is powerful, a manual permutation implementation (shuffling columns and measuring AUC drop) is more robust across package versions and provides a superior learning moment for students to understand the *mechanics* of ML discovery.
 
 ## Discoveries & Notes
 - `mikropml::preprocess_data()` is highly automated but specific about its arguments (e.g., no direct `corr_thresh` for arbitrary thresholds; it focuses on perfectly correlated features).
